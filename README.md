@@ -35,6 +35,8 @@ inv_spherical_transform_sj.pro - an altered version of Marc DeRosa's inv_spheric
     of the optimization algorithm
 optimization_inv_transform.pro - this is the routine that re-calculates the inverse transforms once they've been calculated; it 
     interacts with inv_spherical_transform_sj.pro
+pfss_potl_field_sj.pro - modified version of Marc DeRosa's pfss_potl_field.pro; modification created to use my versions of the 
+    inverse spherical harmonic transform; may contain some other small updates
 pfss_mag_create_sj.pro - my version of Marc DeRosa's pfss_mag_create.pro; initially created to correct an issue I was having with
     hourly GONG magnetograms (they needed to be shifted so that the leftmost pixel column corresponded to carrington longitude
     zero), this routine now includes code that remove net flux from the magntograms before interpolating on the PFSS model grid
@@ -44,5 +46,3 @@ harmonic_component_variability.pro - calculates the range of values for each sph
     of synoptic magnetogram maps; used to set scale variable for harmonic_amoeba2.pro
 find_magtype.pro - magtype is a variable used by PFSS software library to determine how to read the synoptic magnetograms; this
     routine should determine it, but currently only discriminates between magfile=2 and magfile=4
-
-others????
