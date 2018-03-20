@@ -1,0 +1,224 @@
+;+
+;^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+;
+;  inv_spherical_transform.pro - This routine performs an inverse spherical
+;                                harmonic transform on a 2-D array.
+;
+;  usage:  A = inv_spherical_transform(B,cp,period=period,lmax=lmax,
+;                mrange=mrange,phirange=phirange,cprange=cprange)
+;       where B(lmax,lmax) = complex array to be transformed ordered (l,m)
+;             A(n_phi,n_theta) = transformed array ordered (phi,theta)
+;             cp = cosine of theta collocation points for theta grid
+;             period = periodicity factor in phi, assumes input array
+;                      contains m values which are integral multiples
+;                      of period
+;             lmax = set to max l value we want to use
+;             mrange = set to be range of m values we want to use
+;             phirange = (optional) a one- or two-element array containing the
+;                       range of phi to return, in radians.  This option is
+;                       useful for high-resolution transforms where the region
+;                       of interest is bounded in longitude.  If phirange is
+;                       one element, range is [0,phirange].  If two elements,
+;                       range is [phirange(0),phirange(1)].  If not specified,
+;                       the range is set to is [0,2*pi/period].
+;             cprange = (optional) a one- or two-element array containing the
+;                       range of cp to return.  This option is useful for
+;                       high-resolution transforms where the region of
+;                       interest is bounded in latitude.  If cprange is one
+;                       element, range is [-cprange,cprange].  If two
+;                       elements, range is [min(cprange),max(cprange)].  If
+;                       not specified, default range is [-1,1] is used.
+;             thindex = (optional) custom array of theta (colatitude)
+;                         coordinates, in radians, for output grid.  If not
+;                         specified, the argument cp and optional keyword
+;                         cprange are used to determine the theta grid.
+;             phindex = (optional) custom array of phi (longitude)
+;                       coordinates, in radians, for output grid.  If not
+;                       specified, an equally spaced grid with
+;                       2*n_elements(cp) elements is used.
+;
+;  notes: - All calculations are done in double precision.
+;         - Default is to return an array of size
+;           (2*n_elements(cp),n_elements(cp)) unless limits are put on cp
+;           and/or phi ranges via the cprange and phirange keywords, or a
+;           custom grid is specified using thindex and phindex (in which case
+;           phirange and cprange are ignored).
+;         - Routine is increasingly less accurate for higher l.  To see why,
+;           look at table of Legendre functions (m=0 example) in Arfken - 
+;           they are alternating series with increasingly larger numbers being
+;           added and subtracted from each other.
+;
+;  M.DeRosa - 12 Sep 2000 - created
+;             24 Oct 2001 - fixed nasty bug related to sign of m=0 components
+;              2 Apr 2003 - added phirange and cprange keywords
+;              2 Apr 2007 - now calculates phases of B in a cleaner fashion
+;              2 Apr 2007 - added thindex and phindex keywords
+;
+;^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+;-
+
+function inv_spherical_transform,B,cp,lmax=lmax,mrange=mrange,period=period, $
+  phirange=phirange,cprange=cprange,thindex=thindex,phindex=phindex
+
+;  preliminaries
+if keyword_set(period) then period=round(period(0)) else period=1
+if keyword_set(lmax) then lmax=round(long(lmax(0))) $
+  else lmax=n_elements(B(*,0))-1
+case n_elements(mrange) of
+  0:  mrange=[0,lmax]
+  1:  mrange=[0,(round(mrange(0))<lmax)]
+  else:  mrange=[round(mrange(0)),(round(mrange(1))<lmax)]
+endcase
+
+;  determine output (co-)latitude grid
+if n_elements(thindex) gt 0 then begin
+  if max(thindex,min=minthindex) gt !dpi then begin
+    print,'  ERROR in inv_spherical_transform: thindex out of range'
+    return,-1
+  endif else if minthindex lt 0d0 then begin
+    print,'  ERROR in inv_spherical_transform: thindex out of range'
+    return,-1
+  endif 
+  ntheta=n_elements(thindex)
+  costheta=cos(double(thindex))
+  sintheta=sqrt(1-costheta*costheta)
+endif else begin
+  case n_elements(cprange) of
+    0: begin
+      cp1i=-1.0
+      cp2i=1.0
+      end
+    1: begin
+      cp2i=abs(cprange(0))<1
+      cp1i=-cp2i
+      end
+    else: begin
+      cp1i=min(cprange)>(-1)
+      cp2i=max(cprange)<1
+      end
+  endcase
+  wh=where((cp ge cp1i) and (cp le cp2i),ntheta)
+  if ntheta eq 0 then begin
+    print,'  ERROR in inv_spherical_transform: invalid cprange'
+    return,-1
+  endif 
+  costheta=double(cp(wh))
+  sintheta=sqrt(1-costheta*costheta)
+  thindex=acos(costheta)
+endelse
+
+;  determine output longitude grid
+if n_elements(phindex) gt 0 then begin
+  nphi=n_elements(phindex)
+  phiix=double(phindex)
+endif else begin
+  nphi=2*n_elements(cp)
+  phiix=2*!dpi*dindgen(nphi/period)/nphi
+  case n_elements(phirange) of
+    0: begin
+      ph1i=0.0
+      ph2i=2*!dpi/period
+      end
+    1: begin
+      ph1i=0.0
+      ph2i=(2*!dpi/period)<phirange(0)
+      end
+    else: begin
+      ph1i=0.0>min(phirange)
+      ph2i=(2*!dpi/period)<max(phirange)
+      end
+  endcase
+  wh=where((phiix ge ph1i) and (phiix le ph2i),nphi)
+  if nphi eq 0 then begin
+    print,'  ERROR in inv_spherical_transform: invalid phirange'
+    return,-1
+  endif
+  phiix=phiix(wh)
+endelse
+
+;  calculate array of amplitudes and phases of B
+Bamp=abs(B)
+phase=atan(imaginary(B),double(B))
+;wh=where(Bamp ne 0,nwh)
+;B2=B
+;if nwh gt 0 then B2(wh)=B(wh)/Bamp(wh)
+;phase=acos(double(B2))
+;add=1d0*(imaginary(B2) lt 0)
+;mult=2d0*(imaginary(B2) lt 0)-1
+;phase=add*2*!dpi - mult*phase
+
+;  set up output array A
+A=dblarr(nphi,ntheta)
+
+;  take care of modes where m=0
+CP_0_0=1/sqrt(4*!dpi)
+if (mrange(0) eq 0) then begin
+
+  ;  start with m=l=0 mode
+  A=A+replicate(Bamp(0,0)*cos(phase(0,0))*CP_0_0,[nphi,ntheta])
+
+  ;  now do l=1 m=0 mode
+  CP_1_0=sqrt(3d0)*costheta*CP_0_0
+  Y=replicate(cos(phase(1,0)),nphi) # CP_1_0
+  A=A+(Bamp(1,0)*Y)
+
+  ;  do other l modes for which m=0
+  if lmax gt 1 then begin
+    CP_lm1_0=CP_0_0
+    CP_l_0=CP_1_0
+    for l=2,lmax do begin
+      ld=double(l)
+      CP_lm2_0=CP_lm1_0
+      CP_lm1_0=CP_l_0
+      c1=sqrt(4*ld^2-1)/ld
+      c2=sqrt((2*ld+1)/(2*ld-3))*((ld-1)/ld)
+      CP_l_0=c1*costheta*CP_lm1_0-c2*CP_lm2_0
+      Y=replicate(cos(phase(l,0)),nphi) # CP_l_0
+      A=A+(Bamp(l,0)*Y)
+
+    endfor
+  endif
+endif
+
+;  loop through m's for m>0, and then loop through l's for each m
+CP_m_m=CP_0_0
+for m=1,mrange(1) do begin
+
+  md=double(m)
+
+  ;  do l=m mode first
+  CP_mm1_mm1=CP_m_m
+  CP_m_m=-sqrt(1+1/(2*md))*sintheta*CP_mm1_mm1
+  if (mrange(0) le m) and ((m mod period) eq 0) then begin
+
+    angpart=cos(md*phiix + phase(m,m/period))
+    A=A+Bamp(m,m/period)*(angpart#CP_m_m)
+
+    ;  now do l=m+1 mode
+    if lmax ge m+1 then begin
+      CP_mp1_m=sqrt(2*md+3)*costheta*CP_m_m
+      angpart=cos(md*phiix+phase(m+1,m/period))
+      A=A+Bamp(m+1,m/period)*(angpart#CP_mp1_m)
+    endif
+
+    ;  now do other l's
+    if lmax ge m+2 then begin
+      CP_lm1_m=CP_m_m
+      CP_l_m=CP_mp1_m
+      for l=m+2,lmax do begin
+        ld=double(l)
+        CP_lm2_m=CP_lm1_m
+        CP_lm1_m=CP_l_m
+        c1=sqrt((4*ld^2-1)/(ld^2-md^2))
+        c2=sqrt(((2*ld+1)*((ld-1)^2-md^2))/((2*ld-3)*(ld^2-md^2)))
+        CP_l_m=c1*costheta*CP_lm1_m-c2*CP_lm2_m
+        angpart=cos(md*phiix+phase(l,m/period))
+        A=A+Bamp(l,m/period)*(angpart#CP_l_m)
+      endfor
+    endif
+  endif
+endfor
+
+return,A
+
+end
