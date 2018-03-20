@@ -17,6 +17,10 @@ agreement between the model and the image-based constraints.
 What you might call "Main" is the function harmonic_amoeba2.pro, which contains the optimization algorithm.  The repository also
 contains the following programs:
 
+pfss_opt_parameters.pro - contains a common block variable that contains parameters used by the PFSS library and the optimization
+    software
+transform_coefficients.pro - contains a common block variable that contains stored values related to the re-calculation of
+    the inverse harmonic transforms by optimization_inv_transform.pro
 calc_phis.pro - given the modified values of the magnetogram transform, updates the values of phiat and phibt in the PFSS common
     block
 extract_transform.pro - given a vector of spherical harmonic transform coefficient values (a vertex in the optimization scheme),
@@ -26,7 +30,6 @@ find_angle_values2 - samples the magnetic field model at specified locations and
 form_initial_vertex.pro - forms the initial vertex from the original harmonic transform; only certain harmonic coefficients are 
     optimized, so these are extracted from the transform and put into a vector; this routine and extract_transform.pro are 
     essential inverse of one another
-get_harmonic_scale.pro - empty; only here until I figure out how to delete it
 harmonic_trypoint2.pro - calculates the value of the objective function for a given vertex; per amoeba
     implementation of the downhill simplex method, it may alter the simplex, but it can be called for penalty calculation only,
     per the penalty_only keyword
