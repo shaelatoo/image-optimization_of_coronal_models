@@ -86,6 +86,10 @@ function harmonic_trypoint2,simplex,y,psum,windex,fac, $
   ;;             penalize_magchange is set, so that inverse     ;;
   ;;             transform is not computed; B_r is used instead ;;
   ;;           8/7/17 - added omag keyword                      ;;
+  ;;           4/20/18 - changed the way the net flux penalty is;;
+  ;;             calculated; now uses the mean pixel flux       ;;
+  ;;             instead of the total, so that penalize_netflux ;;
+  ;;             doesn't have to be so small                    ;;
   ;;                                                            ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -154,7 +158,7 @@ function harmonic_trypoint2,simplex,y,psum,windex,fac, $
     if KEYWORD_SET(omag) then oldmag=omag else oldmag= $
       INV_SPHERICAL_TRANSFORM_SJ(magt,cth,lmax=lmax)
     newmag=OPTIMIZATION_INV_TRANSFORM(newmagt,nrix,0,lmax=lmax)
-    penalty=penalty+penalize_netflux*TOTAL(newmag)^2.
+    penalty=penalty+penalize_netflux*MEAN(newmag)^2.
     if penalize_magchange ne 0. then penalty=penalty+ $
         penalize_magchange*TOTAL(magweights*ABS(newmag-mag0))
 

@@ -18,6 +18,9 @@ pro pfss_mag_create_sj,magout,magtype,nlat0,gridtype,file=file, $
 ; update:  1/19/2018 - added no_zero keyword to allow to create maps
 ;   where the net flux has not been removed; this may be the best
 ;   approach for the ADAPT maps
+; update: ??/2018 - altered to adjust net flux *after* resampling 
+;   instead of before
+;
 ;+
 ;^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ;
@@ -72,7 +75,7 @@ pro pfss_mag_create_sj,magout,magtype,nlat0,gridtype,file=file, $
 ;                       phis = array of longitudes in radians
 ;                       thetas = array of colatitudes in radians
 ;                     To get Mx/cm^2 at each point, multiply by
-;                       nlat*nlon/(4*!dpi*rsun^2) where rsun=6.959d10 (cm)
+;                       nl/home/sjonesme/PFSS/results/optimization_out_20180412.savat*nlon/(4*!dpi*rsun^2) where rsun=6.959d10 (cm)
 ;         -magtype=1: Wilcox text files are available at
 ;                     http://wso.stanford.edu/synopticl.html, with the
 ;                     input data in units of microTesla.
@@ -260,19 +263,21 @@ stop
       data=data/sqrt(1-slatgrid*slatgrid)
 
       ; adjust net flux
-      ; note: I think Wilcox does their own zero subtraction before 
+      ; note: I think Wilcox does their own net flux subtraction before 
       ;   publishing the synoptic charts, so this is probably 
       ;   redundant
       ; note: zero_array will probably not be tested with Wilcox data
       ;   for a while, if ever - caveat emptor
-      if NOT(KEYWORD_SET(no_zero)) then begin
-        zerofluxdata=ZERO_ARRAY(data)
-      endif else zerofluxdata=data
+;      if NOT(KEYWORD_SET(no_zero)) then begin
+;        zerofluxdata=ZERO_ARRAY(data)
+;      endif else zerofluxdata=data
       
       ;  remap onto our grid
       dlatinterp=get_interpolation_index(reverse(dlatix),lat)
       dloninterp=get_interpolation_index(dlonix,lon)
-      magout=interpolate(zerofluxdata,dloninterp,dlatinterp,/grid)
+      interpmap=interpolate(data,dloninterp,dlatinterp,/grid)
+      if KEYWORD_SET(no_zero) then magout=interpmap else $
+           magout=ZERO_ARRAY(interpmap)
       
       ;  no need to take into account unequal-sized pixels of Legendre grid,
       ;  since both input and output data are in terms of flux densities
@@ -291,10 +296,10 @@ stop
       ;  read fits file
       mreadfits,file,hdr,data
       
-      ; adjust net flux
-      if NOT(KEYWORD_SET(no_zero)) then begin
-        zerofluxdata=ZERO_ARRAY(data)
-      endif else zerofluxdata=data
+;      ; adjust net flux
+;      if NOT(KEYWORD_SET(no_zero)) then begin
+;        zerofluxdata=ZERO_ARRAY(data)
+;      endif else zerofluxdata=data
 
       
       ;  remap onto our grid
@@ -302,16 +307,18 @@ stop
       dlonix=linrange(360,1,360) ;  360 longitude bins
       initlong=DOUBLE(hdr.mapedge)
       if initlong gt 0 then begin
-        temp=zerofluxdata
+        temp=data
         longitudes=dlonix+initlong
         loc=WHERE(longitudes gt 360)
-        zerofluxdata=[temp[loc[0]:*,*],temp[0:loc[0]-1,*]]
+        data=[temp[loc[0]:*,*],temp[0:loc[0]-1,*]]
         longitudes=[longitudes[loc[0]:*]-360.,longitudes[0:loc[0]-1]]
         dlonix=longitudes
       endif
       dlatinterp=get_interpolation_index(reverse(dlatix),lat)
       dloninterp=get_interpolation_index(dlonix,lon)
-      magout=interpolate(zerofluxdata,dloninterp,dlatinterp,/grid)
+      interpmap=interpolate(data,dloninterp,dlatinterp,/grid)
+      if KEYWORD_SET(no_zero) then magout=interpmap else $
+           magout=ZERO_ARRAY(interpmap)
       
     end
     
@@ -331,18 +338,21 @@ stop
       wh=where(abs(data-blank) lt (1e-4),nwh)
       if nwh gt 0 then data(wh)=0.0
       
-      ; adjust net flux
-      if NOT(KEYWORD_SET(no_zero)) then begin
-        zerofluxdata=ZERO_ARRAY(data)
-      endif else zerofluxdata=data
+;      ; adjust net flux
+;      if NOT(KEYWORD_SET(no_zero)) then begin
+;        zerofluxdata=ZERO_ARRAY(data)
+;      endif else zerofluxdata=data
 
       ;  remap onto our grid
       dlatix=asin(linrange(1080,539.5,-539.5)/540)*180/!dpi  ;  1080 slat bins
       dlonix=linrange(3600,0.1,360)  ;  3600 longitude bins
       dlatinterp=get_interpolation_index(reverse(dlatix),lat)
       dloninterp=get_interpolation_index(dlonix,lon)
-      magout=interpolate(zerofluxdata,dloninterp,dlatinterp,/grid)
-      
+      interpmap=interpolate(data,dloninterp,dlatinterp,/grid)
+      if KEYWORD_SET(no_zero) then magout=interpmap else $
+        magout=ZERO_ARRAY(interpmap)
+        
+        
       ;  no need to take into account unequal-sized pixels of Legendre grid,
       ;  since both input and output data are in terms of flux densities
       ;  (e.g. Tesla or Gauss) instead of flux (e.g. Weber or Maxwell)
@@ -360,23 +370,26 @@ stop
       ;  read fits file
       data=readfits(file,hdr)
       
-      ; adjust net flux
-      if NOT(KEYWORD_SET(no_zero)) then begin
-        zerofluxdata=ZERO_ARRAY(data)
-      endif else zerofluxdata=data
+;      ; adjust net flux
+;      if NOT(KEYWORD_SET(no_zero)) then begin
+;        zerofluxdata=ZERO_ARRAY(data)
+;      endif else zerofluxdata=data
 
       ;  set out of bounds points to zero
-      wh=where(zerofluxdata lt (-3e4),nwh)
-      if nwh gt 0 then zerofluxdata(wh)=0.0
-      wh=WHERE(FINITE(zerofluxdata,/nan),nwh)
-      if nwh gt 0 then zerofluxdata(wh)=0.0
+      wh=where(data lt (-3e4),nwh)
+      if nwh gt 0 then data(wh)=0.0
+      wh=WHERE(FINITE(data,/nan),nwh)
+      if nwh gt 0 then data(wh)=0.0
       
       ;  remap onto our grid
       dlatix=asin(linrange(1440,719.5,-719.5)/720)*180/!dpi  ;  1440 slat bins
       dlonix=linrange(3600,0.1,360)  ;  3600 longitude bins
       dlatinterp=get_interpolation_index(reverse(dlatix),lat)
       dloninterp=get_interpolation_index(dlonix,lon)
-      magout=interpolate(zerofluxdata,dloninterp,dlatinterp,/grid)
+      interpmap=interpolate(data,dloninterp,dlatinterp,/grid)
+      if KEYWORD_SET(no_zero) then magout=interpmap else $
+        magout=ZERO_ARRAY(interpmap)
+
       
       ;  no need to take into account unequal-sized pixels of Legendre grid,
       ;  since both input and output data are in terms of flux densities
@@ -398,9 +411,9 @@ stop
       data=REFORM(data[*,*,adapt_ind])
       
       ; adjust net flux
-      if NOT(KEYWORD_SET(no_zero)) then begin
-        zerofluxdata=ZERO_ARRAY(data)
-      endif else zerofluxdata=data
+;      if NOT(KEYWORD_SET(no_zero)) then begin
+;        zerofluxdata=ZERO_ARRAY(data)
+;      endif else zerofluxdata=data
           
       
       ;  remap onto our grid  -  assumes map has GONG resolution 
@@ -410,8 +423,10 @@ stop
         dlonix=linrange(360,0,359) ;  360 longitude bins
         dlatinterp=get_interpolation_index(reverse(dlatix),lat)
         dloninterp=get_interpolation_index(dlonix,lon)
-        magout=interpolate(zerofluxdata,dloninterp,dlatinterp,/grid)
-      endif else magout=data
+        interpmap=interpolate(data,dloninterp,dlatinterp,/grid)
+        if KEYWORD_SET(no_zero) then magout=interpmap else $
+          magout=ZERO_ARRAY(interpmap)
+      endif else magout=ZERO_ARRAY(data)
         
     end
     
