@@ -79,7 +79,10 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
   ;      will not be processed and initmag, if set, will be ignored; 
   ;      primarily for use in artificial test cases
   ;    netfluxpenalty - if set, a term is added to the penalty function
-  ;      proportional to the net flux in the magnetogram
+  ;      proportional to the net flux in the magnetogram; may be set to a 
+  ;      constant value (not equal to one), or if set to one will be auto-
+  ;      matically calculated at 20 times the initial value of the 
+  ;      fidelity term
   ;    radial_grid - if set, should be a custom arrangement of radial
   ;      grid points at which to calculate the model; added for work
   ;      with Leon, who wanted a linear grid at high resolution to
@@ -98,7 +101,12 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
   ;     pass it to harmonic_trypoint  (sij)
   ;            2/28/17 - removed maxlvar input and added to pfss_opt_parameters
   ;            5/30/17 - modified to accept a custom radial model grid
-  ;            7/27/17 - removed mean subraction from magnetogram, now performed in pfss_mag_create_sj before re-gridding
+  ;            7/27/17 - removed mean subraction from magnetogram, now performed 
+  ;                        in pfss_mag_create_sj before re-gridding
+  ;            8/21/18 - incorporated caculation of net flux penalty
+  ;                        parameter based on initial fidelity term, changed 
+  ;                        usage of netfluxpenalty keyword
+  
   
   
   ; initialize pfss common block
@@ -129,12 +137,19 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
   if N_ELEMENTS(rindex) ne 0 then rgrid=3
   
 
- ; check that pfss_opt_parameters have been defined
+  ; check that pfss_opt_parameters have been defined
   if N_ELEMENTS(rss) eq 0 or N_ELEMENTS(rgrid) eq 0 or $
-       N_ELEMENTS(magtype) eq 0 or N_ELEMENTS(nlat0) eq 0 or $
-       N_ELEMENTS(noreset) eq 0 or N_ELEMENTS(maxlvar) eq 0 $
-       then begin
+    N_ELEMENTS(magtype) eq 0 or N_ELEMENTS(nlat0) eq 0 or $
+    N_ELEMENTS(noreset) eq 0 or N_ELEMENTS(maxlvar) eq 0 $
+    then begin
     print,'Important variables from pfss_opt_parameters not defined'
+    print,'Please provide values for variables:'
+    print,'rss (suggestion: 2.5)'
+    print, 'rgrid (suggestion: 1-equal radial spacing, 2-grows as r^2'
+    print, 'magtype (suggestion: use find_magtype(<magfile>)'
+    print, 'nlat0 (suggestion: 180)
+    print, 'noreset (suggestion: initialize to 0)'
+    print, 'maxlvar (suggestion: 6)'
     return,-1
   endif
   
@@ -149,8 +164,6 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
   if N_ELEMENTS(scale) eq 0 then scale=defaultscale
   if NOT(KEYWORD_SET(time_cutoff)) then time_cutoff=tc_default
   if N_ELEMENTS(weights) eq 0 then weights=FLTARR(nangles)+1
-  if KEYWORD_SET(netfluxpenalty) then penalize_netflux= $
-    netfluxpenalty else penalize_netflux=0.
   if KEYWORD_SET(magchangepenalty) then begin
     penalize_magchange=magchangepenalty
     if N_ELEMENTS(magweights) eq 0 then begin
@@ -224,6 +237,23 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
   fieldcomps_set[nr,0]=1
   PFSS_POTL_FIELD_SJ,/trunc,/quiet   ; populates fieldcomps array
 
+  
+  ; establish net flux penalty proportionality constant
+  if NOT(KEYWORD_SET(netfluxpenalty)) then begin
+    penalize_netflux=0.
+  endif else begin
+    if netfluxpenalty eq 1 then begin
+      y=FLTARR(nvert+1)
+      psum=TOTAL(simplex,2)
+      obj_fcn=HARMONIC_TRYPOINT2(simplex,y,psum,0,1., $
+           angles,coords,spcCoords,/penalty_only)
+      penalize_netflux=20.*obj_fcn
+    endif else penalize_netflux=netfluxpenalty
+  endelse
+
+  
+  
+  
   
   ; initialize vector of penalty function values
   psum=0
