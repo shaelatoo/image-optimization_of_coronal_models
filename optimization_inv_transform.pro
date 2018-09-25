@@ -91,7 +91,7 @@ if NOT(fieldcomps_set[altitude,component]) then begin
   endif else begin
     if NOT(MAX(ABS(stablefieldcomps[*,*,altitude, $
          component]))) eq 0 then begin
-      print,'Variable stablefieldcomps non-zero while fieldcomps_set=0.  Re-calculate or halt?'
+      print,'optimization_inverse_transform:  Variable stablefieldcomps non-zero while fieldcomps_set=0.  Re-calculate or halt?'
       print,'1=recalculate'
       print,'other=halt execution'
       read,user_input
