@@ -24,12 +24,14 @@ function zero_array,data
 ;;                                                            ;;
 ;; Created by: Shaela Jones                                   ;;
 ;;                                                            ;;
+;; Modifications: 10/2/18 - (sij) changed adjustment so that  ;;
+;;                  result has the same absolute flux as the  ;;
+;;                  input (original adjustment below end)     ;;
+;;                                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-; calculate dominant sign
-totdata=TOTAL(data)
-dominantsign=totdata/ABS(totdata)
+; locate positive and negative array elements
 poslist=WHERE(data ge 0,poscnt)
 neglist=WHERE(data lt 0,negcnt)
 
@@ -41,22 +43,39 @@ if poscnt eq 0 or negcnt eq 0 then begin
 endif
 
 
-; calculate adjustment factor
-p=TOTAL(data[poslist])
-n=TOTAL(data[neglist])
-adjust_factor=-p/n
+
+; calculate adjustment factors
+total_abs_flux=TOTAL(data[poslist])-TOTAL(data[neglist])
+pos_adjust=total_abs_flux/2./TOTAL(data[poslist])
+neg_adjust=-total_abs_flux/2./TOTAL(data[neglist])
+
 
 
 ; adjust array members
 newdata=data
-if dominantsign eq 1 then begin
-  newdata[poslist]=data[poslist]/adjust_factor
-endif else begin
-  newdata[neglist]=data[neglist]*adjust_factor
-endelse
+newdata[poslist]=pos_adjust*data[poslist]
+newdata[neglist]=neg_adjust*data[neglist]
 
 
 return,newdata
 end
+
+
+; obsolete
+
+;; calculate adjustment factor
+;p=TOTAL(data[poslist])
+;n=TOTAL(data[neglist])
+;adjust_factor=-p/n
+
+
+;; adjust array members
+;newdata=data
+;if dominantsign eq 1 then begin
+;  newdata[poslist]=data[poslist]/adjust_factor
+;endif else begin
+;  newdata[neglist]=data[neglist]*adjust_factor
+;endelse
+
 
 
