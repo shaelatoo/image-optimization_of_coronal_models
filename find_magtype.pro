@@ -31,6 +31,11 @@ strloc2=STRPOS(magfile,'gong')
 strloc3=STRPOS(magfile,'mrbqs')
 if MAX([strloc,strloc2,strloc3]) gt -1 then return,2
 
+; search string for 'adapt'
+strloc6=STRPOS(magfile,'adapt')
+strloc7=STRPOS(magfile,'ADAPT')
+if MAX([strloc6,strloc7]) gt -1 then return,5
+
 ; search string for 'HMI'
 strloc4=STRPOS(magfile,'HMI')
 strloc5=STRPOS(magfile,'hmi')
