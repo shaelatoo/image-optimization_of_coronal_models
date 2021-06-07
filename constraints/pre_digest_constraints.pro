@@ -19,8 +19,11 @@ pro pre_digest_constraints,files,angles,coords,lengths, $
 nfiles=N_ELEMENTS(files)
 constptrs=PTRARR(nfiles,/allocate_heap)
 restore,files[0]
-nlines=N_ELEMENTS(header)
-hdrs=STRARR(nfiles,nlines)
+szhdr = SIZE(header)
+if szhdr[1] gt 1 then begin
+    nlines=N_ELEMENTS(header)
+    hdrs=STRARR(nfiles,nlines)
+endif else hdrs = []
 coordstrucs=PTRARR(nfiles,/allocate_heap)
 ncnsts=INTARR(nfiles)
 szimg_enh=SIZE(img_enh)
@@ -29,12 +32,13 @@ obs_times = STRARR(nfiles)
 for i=0,nfiles-1 do begin
   restore,files[i]
   *constptrs[i]=features
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ; MLSO files, when re-processed, have fewer lines in the header; this is a cheat to combine files with different length headers
-  header_len = N_ELEMENTS(header)
-  if header_len lt nlines then hdrs[i,0:header_len - 1] = header else hdrs[i,*] = header[0:nlines-1]
-  ;hdrs[i,*]=header
-;;;;;;;;;;;;;;;;;;;;;;;;;;
+  if szhdr[1] gt 1 then begin    ; header is string array
+    ; MLSO files, when re-processed, have fewer lines in the header; this is a 
+    ;     cheat to combine files with different length headers
+    header_len = N_ELEMENTS(header)
+    if header_len lt nlines then hdrs[i,0:header_len - 1] = header else hdrs[i,*] = header[0:nlines-1]
+    hdrs[i,*]=header
+  endif else hdrs = [hdrs, header]
   img_enhs[i,*,*]=img_enh
   wcshead=FITSHEAD2WCS(header)
   obs_times[i] = wcshead.time.observ_date
