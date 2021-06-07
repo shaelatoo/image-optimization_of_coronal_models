@@ -16,8 +16,10 @@ function create_pfss_structure,magfile=magfile
 
 
 ; if magfile provided, calc omag
-if KEYWORD_SET(magfile) then pfss_mag_create_sj,omag,magtype,nlat0, $
-     file=magfile,/quiet
+if KEYWORD_SET(magfile) then begin
+  magtype = find_magtype(magfile)
+  pfss_mag_create_sj,omag,magtype,nlat0,file=magfile,/quiet
+endif
 
 
 ; calculate field

@@ -25,17 +25,17 @@ function find_magtype,magfile
 ;;                                                            ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; search string for 'adapt'
+strloc6=STRPOS(magfile,'adapt')
+strloc7=STRPOS(magfile,'ADAPT')
+if MAX([strloc6,strloc7]) gt -1 then return,5
+
 ; search string for 'GONG'
 strloc=STRPOS(magfile,'GONG')
 strloc2=STRPOS(magfile,'gong')
 strloc3=STRPOS(magfile,'mrbqs')
 strloc4=STRPOS(magfile,'mrzqs')
 if MAX([strloc,strloc2,strloc3,strloc4]) gt -1 then return,2
-
-; search string for 'adapt'
-strloc6=STRPOS(magfile,'adapt')
-strloc7=STRPOS(magfile,'ADAPT')
-if MAX([strloc6,strloc7]) gt -1 then return,5
 
 ; search string for 'HMI'
 strloc4=STRPOS(magfile,'HMI')
