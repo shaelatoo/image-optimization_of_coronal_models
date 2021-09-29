@@ -2,11 +2,8 @@ function zero_array,data
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                                            ;;
-;; Purpose: Adjusts input array to have zero mean.  Initially ;;
-;;            done by rescaling the array members with the    ;;
-;;            dominant sign until the positive and negative   ;;
-;;            members cancel one another, however, additional ;;
-;;            techniques may be added later using keywords.   ;;
+;; Purpose: Adjusts input array to have zero mean, while      ;;
+;;            preserving the absolute flux.                   ;;
 ;;            For use with PFSS optimization, to remove any   ;;
 ;;            net flux in the input magnetograms.             ;;
 ;;                                                            ;;
