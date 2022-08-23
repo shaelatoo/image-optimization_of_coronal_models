@@ -37,7 +37,7 @@ for i=0,nfiles-1 do begin
     ;     cheat to combine files with different length headers
     header_len = N_ELEMENTS(header)
     if header_len lt nlines then hdrs[i,0:header_len - 1] = header else hdrs[i,*] = header[0:nlines-1]
-    hdrs[i,*]=header
+    ;hdrs[i,*]=header
   endif else hdrs = [hdrs, header]
   img_enhs[i,*,*]=img_enh
   wcshead=FITSHEAD2WCS(header)
@@ -49,8 +49,6 @@ for i=0,nfiles-1 do begin
   coordstruc=CREATE_STRUCT('x',xs,'y',ys) 
   *coordstrucs[i]=coordstruc
   ncnsts[i]=szxs
-  tims=wcshead.time.observ_date
-  if i eq 0 then image_times=tims else image_times=[image_times,tims]
 endfor
 
 
@@ -61,7 +59,7 @@ digest_constraints2,constptrs,hdrs,img_enhs,angles,coords, $
 
 if KEYWORD_SET(savefile) then begin
   save,filename=savefile,files,coordstrucs,hdrs,angles,coords, $
-       lengths,weights,spccoords,image_times
+       lengths,weights,spccoords,obs_times
 endif
 
 
