@@ -127,6 +127,7 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
   berr=0.1
   pen_mult=10.
   noreset=0
+  if maxlvar ge 4 then printcnt=100 else printcnt=30
   
   
   ; begin timing
@@ -349,7 +350,7 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
     endif
     tims[cnt]=TOC()
     nums[cnt]=cnt
-    if (cnt mod 100) eq 0 then begin
+    if (cnt mod printcnt) eq 0 then begin
       print,"Elapsed time = ",tims[cnt]/60.,' mins'
       print,'Penalty function at best vertex = ',min_values[cnt]
       if KEYWORD_SET(magmovset) then begin
