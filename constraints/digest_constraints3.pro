@@ -1,9 +1,6 @@
 pro digest_constraints3,files,angles,coords,lengths,weights, $
-               spcCoords
-
-
-;;;;;;;;;;    SHOULD ADD COORDSTRUC ARRAYS?   ;;;;;;;;;;
-
+               spcCoords, nfeatures, obs_times, img_enhs, $
+               hdrs
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                                            ;;
@@ -62,6 +59,7 @@ coords = fltarr(3,2)
 
 ; read files, populate data arrays
 for i=0,nfiles-1 do begin
+  nfeatures[i] = n_elements(features.n_nodes)  
   ; for each image, find feature and image parameters
   restore,files[i]
   if szhdr[1] gt 1 then begin    ; header is string array
