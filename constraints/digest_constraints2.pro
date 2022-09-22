@@ -58,16 +58,10 @@ nconstptrs=N_ELEMENTS(constptrs)
 for k=0,nconstptrs-1 do begin   ; read in data structures
   ; for each image, find feature and image parameters
   constraints=*constptrs[k]
-;  angs=REFORM(constraints.angles_p, $
-;      N_ELEMENTS(constraints.angles_p))
   hdr=REFORM(hdrs[k,*])
   wcs=FITSHEAD2WCS(hdr)
   crlnobs=wcs.position.crln_obs*!dtor
   ctr=wcs.crpix
-;  xs=REFORM(constraints.angles_xx_r, $
-;       N_ELEMENTS(constraints.angles_xx_r))
-;  ys=REFORM(constraints.angles_yy_r, $
-;       N_ELEMENTS(constraints.angles_yy_r))
   xs=constraints.angles_xx_r
   ys=constraints.angles_yy_r
   angs=constraints.angles_p
@@ -147,7 +141,6 @@ for k=0,nconstptrs-1 do begin   ; read in data structures
   rot_matrix=[[csolb+ux^2.*mcsolb, ux*uy*mcsolb, -uy*ssolb], $
             [uy*ux*mcsolb, csolb+uy^2.*mcsolb, ux*ssolb], $
             [uy*ssolb, -ux*ssolb, csolb]]   ; matrix is transposed from usual sense due to IDL's strange way of multiplying matrices
-;  newrectcoords=TRANSPOSE(rot_matrix##TRANSPOSE(rectcoords))
   newrectcoords=TRANSPOSE(MATRIX_MULTIPLY(rectcoords,rot_matrix,/atranspose))
   coordsi=CV_COORD(from_rect=newrectcoords,/to_sphere)
   coordsi[1,*]=!dpi/2.-coordsi[1,*]

@@ -148,7 +148,7 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
     print,'rss (suggestion: 2.5)'
     print, 'rgrid (suggestion: 1-equal radial spacing, 2-grows as r^2'
     print, 'magtype (suggestion: use find_magtype(<magfile>)'
-    print, 'nlat0 (suggestion: 180)
+    print, 'nlat0 (suggestion: 180)'
     print, 'noreset (suggestion: initialize to 0)'
     print, 'maxlvar (suggestion: 6)'
     return,-1
