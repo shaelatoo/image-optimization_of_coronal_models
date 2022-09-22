@@ -21,19 +21,20 @@ pro draw_constraint_figures, files, outfile_stem
 
 
 ; loop over image files
-for fnum in files do begin
+for fnum=0,n_elements(files)-1 do begin
   restore, files[fnum]
-  imgObj=IMAGE(newimg, /buffer)
+  imgObj=IMAGE(img_enh, /buffer)
   ; loop over features
   xs = []
   ys = []
   angles = []
   ; combine all detected features into one data set
   for feature_ind=0,N_ELEMENTS(features.n_nodes)-1 do begin
-    nanglesj = features[j].n_nodes-1  ; number of angle 1 < number of nodes
-    angles = [angles, features[j].angles_p[0:nanglesj-1]]
-    xs = [xs, features[j].angles_xx_r[0:nanglesj-1]]
-    ys = [ys, features[j].angles_yy_r[0:nanglesj-1]]
+    nanglesj = features[feature_ind].n_nodes-1  ; number of angle 1 < number of nodes
+    angles = [angles, features[feature_ind].angles_p[0:nanglesj-1]]
+    xs = [xs, features[feature_ind].angles_xx_r[0:nanglesj-1]]
+    ys = [ys, features[feature_ind].angles_yy_r[0:nanglesj-1]]
+  endfor
   if N_ELEMENTS(strength) eq 0 then strength=185
   u=strength*COS(angles)
   v=strength*SIN(angles)
