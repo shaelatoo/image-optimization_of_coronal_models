@@ -56,23 +56,3 @@ newdata[neglist]=neg_adjust*data[neglist]
 
 return,newdata
 end
-
-
-; obsolete
-
-;; calculate adjustment factor
-;p=TOTAL(data[poslist])
-;n=TOTAL(data[neglist])
-;adjust_factor=-p/n
-
-
-;; adjust array members
-;newdata=data
-;if dominantsign eq 1 then begin
-;  newdata[poslist]=data[poslist]/adjust_factor
-;endif else begin
-;  newdata[neglist]=data[neglist]*adjust_factor
-;endelse
-
-
-

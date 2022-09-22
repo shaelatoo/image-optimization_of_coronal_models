@@ -45,8 +45,7 @@ pro pfss_optimization,mag_file,scale_magfiles,constraints_file, $
 ;;                 inv_spherical_transform_sj,calc_phis,      ;;
 ;;                 optimization_inv_transform,find_magtype,   ;;
 ;;                 pfss_potl_field_sj,zero_array,???          ;;
-;;                 harmonic_component_variability,            ;;
-;;                 make_hairyball                             ;;
+;;                 harmonic_component_variability             ;;
 ;;                                                            ;;
 ;; Created: 04/12/2018                                        ;;
 ;;                                                            ;;
