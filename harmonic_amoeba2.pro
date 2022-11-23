@@ -246,6 +246,7 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
     if netfluxpenalty eq 1 then begin
       y=FLTARR(nvert+1)
       psum=TOTAL(simplex,2)
+      penalize_netflux=0.
       obj_fcn=HARMONIC_TRYPOINT2(simplex,y,psum,0,1., $
            angles,coords,spcCoords,/penalty_only)
       penalize_netflux=20.*obj_fcn
