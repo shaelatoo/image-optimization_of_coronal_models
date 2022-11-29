@@ -211,6 +211,7 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
   endif else begin
     magt=SPHERICAL_TRANSFORM(magnetogram,cth,lmax=lmax)
   endelse
+  mag0 = INV_SPHERICAL_TRANSFORM(magt, cth, lmax=lmax)  ; used for magchangepenalty
   if maxlvar gt 1 then begin
     sim0=FORM_INITIAL_VERTEX(magt,maxlvar)
     nvert=N_ELEMENTS(sim0)
