@@ -26,7 +26,7 @@ pro digest_constraints3,files,angles,coords,lengths,weights, $
 ;;                                                            ;;
 ;; Outputs: angles - the measured POS B field angles          ;;
 ;;          coords - 3xn array of coordinates where angles    ;;
-;;            were measured (longitude,latitude,radius) in    ;;
+;;            were measured (longitude,co-latitude,radius) in    ;;
 ;;            units of (radians,radians,solar radii)          ;;
 ;;          spcCoords - 2xn array giving the latitude,       ;;
 ;;            longitude from which the constraint angles are to;;
