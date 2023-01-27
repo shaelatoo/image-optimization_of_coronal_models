@@ -154,20 +154,21 @@ function harmonic_trypoint2,simplex,y,psum,windex,fac, $
   
   
   ; add optional penalty terms for net flux or magnetogram changes
+  ;    convoluted logic saves double computation of omag - better way?
   if penalize_netflux ne 0. then begin
     if KEYWORD_SET(omag) then oldmag=omag else oldmag= $
       INV_SPHERICAL_TRANSFORM_SJ(magt,cth,lmax=lmax)
     newmag=OPTIMIZATION_INV_TRANSFORM(newmagt,nrix,0,lmax=lmax)
     penalty=penalty+penalize_netflux*MEAN(newmag)^2.
     if penalize_magchange ne 0. then penalty=penalty+ $
-        penalize_magchange*TOTAL(magweights*ABS(newmag-mag0))
+        penalize_magchange*TOTAL(magweights*ABS(newmag-mag0))/(3.*nlat)
 
   endif else if penalize_magchange ne 0. then begin
     if KEYWORD_SET(omag) then oldmag=omag else oldmag= $
          INV_SPHERICAL_TRANSFORM_SJ(magt,cth,lmax=lmax)
     penalty=penalty+penalize_magchange*TOTAL(magweights* $
          ABS(oldmag-OPTIMIZATION_INV_TRANSFORM(newmagt,nrix, $
-         0,lmax=lmax)))
+         0,lmax=lmax)))/(3.*nlat)
   endif
   
   
