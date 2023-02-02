@@ -139,7 +139,8 @@ function harmonic_trypoint2,simplex,y,psum,windex,fac, $
   list=WHERE(diffs ge !dpi/2.,cnt)
   if cnt ne 0 then diffs[list]=ABS(diffs[list]-!dpi)
   diffs=diffs^diff_power
-  normal=nconstraints*MEDIAN(weights)*(berr*MEDIAN(angles))^diff_power
+;  normal=nconstraints*MEDIAN(weights)*(berr*MEDIAN(angles))^diff_power
+  normal=nconstraints*MEDIAN(weights)*(!dpi/4.)^diff_power
   penalty=TOTAL(weights*diffs)/normal
 
 
