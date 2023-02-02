@@ -23,7 +23,7 @@ pro draw_constraint_figures, files, outfile_stem
 ; loop over image files
 for fnum=0,n_elements(files)-1 do begin
   restore, files[fnum]
-  imgObj=IMAGE(img_enh, /buffer)
+  imgObj=IMAGE(sqrt(img_orig), /buffer)
   ; loop over features
   xs = []
   ys = []

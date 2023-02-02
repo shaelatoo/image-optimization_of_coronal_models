@@ -1,6 +1,10 @@
 pro digest_constraints3,files,angles,coords,lengths,weights, $
                spcCoords, nfeatures, obs_times, img_enhs, $
-               hdrs
+               hdrs, badfiles=badfiles
+
+;;;;;; Note: I should add another output, nconstraints, to 
+;;;;;    preserve the number of constraints associated with
+;;;;;    each feature
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                                            ;;
@@ -19,14 +23,10 @@ pro digest_constraints3,files,angles,coords,lengths,weights, $
 ;;                 detected in the image                      ;;
 ;;               img_enh - coronagraph images with edges      ;;
 ;;                 enhanced using azimuthal derivative        ;;
-;;               header - header from original fits file      ;;
-;;                 sometimes this is a string array, and      ;;
-;;                 sometimes a structure, depending on the    ;;
-;;                 original data source                       ;;
 ;;                                                            ;;
 ;; Outputs: angles - the measured POS B field angles          ;;
 ;;          coords - 3xn array of coordinates where angles    ;;
-;;            were measured (longitude,latitude,radius) in    ;;
+;;            were measured (longitude,co-latitude,radius) in    ;;
 ;;            units of (radians,radians,solar radii)          ;;
 ;;          spcCoords - 2xn array giving the latitude,       ;;
 ;;            longitude from which the constraint angles are to;;
@@ -56,6 +56,7 @@ angles = []
 lengths = []
 spccoords = fltarr(2,2)  ; need these to be 2D from the beginning
 coords = fltarr(3,2)
+badfiles=[]
 
 ; read files, populate data arrays
 for i=0,nfiles-1 do begin
@@ -71,6 +72,13 @@ for i=0,nfiles-1 do begin
   endif else hdrs = [hdrs, header]
   img_enhs[i,*,*]=img_enh
   wcshead=FITSHEAD2WCS(header)
+  ; check to see if QRaFT has resized the images but not modified the header
+  if wcshead.naxis[0] eq 1024 and szimg_enh[1] eq 512 then begin
+	  fudgefactor = 2
+  endif else if wcshead.naxis[0] ne szimg_enh[1] then begin
+	  print,"header and enhanced image sizes don't agree"
+	  continue
+  endif else fudgefactor = 1
   obs_times[i] = wcshead.time.observ_date
   crlnobs=wcshead.position.crln_obs*!dtor
   ctr=wcshead.crpix
@@ -81,13 +89,32 @@ for i=0,nfiles-1 do begin
     nanglesj = features[j].n_nodes-1
     lengths = [lengths, features[j].l]
     angles = [angles, features[j].angles_p[0:nanglesj-1]]
-    xs = [xs, features[j].angles_xx_r[0:nanglesj-1]]
-    ys = [ys, features[j].angles_yy_r[0:nanglesj-1]]
+    xs = [xs, fudgefactor*features[j].angles_xx_r[0:nanglesj-1]]
+    ys = [ys, fudgefactor*features[j].angles_yy_r[0:nanglesj-1]]
     crlts=REPLICATE(wcshead.position.crlt_obs,nanglesj)
     crlns=REPLICATE(wcshead.position.crln_obs,nanglesj)
     spccoords=[[spccoords], [TRANSPOSE([[crlts],[crlns]])]]
   endfor
+  newcoords = calc_realworld_coords(xs, ys, wcshead)
   coords = [[coords], [calc_realworld_coords(xs, ys, wcshead)]]
+  if min(newcoords[2,*]) lt 1.4 then begin    ; some feature has a bad coordinate value
+	  badfiles = [badfiles, files[i]]
+	  print,'Radial value for one of the constraints is too small.'
+	  print,'filename: '+ files[i]
+	  ; find out why the radial coordinate is so bad
+	  for j=0, n_elements(features.n_nodes)-1 do begin  ; check each feature in the image
+                  nanglesj = features[j].n_nodes-1
+		  thisx = fudgefactor*features[j].angles_xx_r[0:nanglesj-1]
+		  thisy = fudgefactor*features[j].angles_yy_r[0:nanglesj-1]
+                  thiscoords = calc_realworld_coords(thisx, thisy, wcshead)
+	          badlist = where(thiscoords[2,*] lt 1.5,badcount)
+		  if badcount ne 0 then begin   ; if this feature has a bad coordinate value
+	            print,'xs: ',thisx[badlist]
+	            print,'ys: ',thisy[badlist]
+	            print,'r: ',thiscoords[2,badlist]
+		  endif
+	  endfor
+  endif
 
 endfor   ; loop over image files
 

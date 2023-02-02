@@ -211,6 +211,7 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
   endif else begin
     magt=SPHERICAL_TRANSFORM(magnetogram,cth,lmax=lmax)
   endelse
+  mag0 = INV_SPHERICAL_TRANSFORM(magt, cth, lmax=lmax)  ; used for magchangepenalty
   if maxlvar gt 1 then begin
     sim0=FORM_INITIAL_VERTEX(magt,maxlvar)
     nvert=N_ELEMENTS(sim0)
@@ -246,6 +247,7 @@ function harmonic_amoeba2,magfile,angles,coords,ftol,scale, $
     if netfluxpenalty eq 1 then begin
       y=FLTARR(nvert+1)
       psum=TOTAL(simplex,2)
+      penalize_netflux=0.
       obj_fcn=HARMONIC_TRYPOINT2(simplex,y,psum,0,1., $
            angles,coords,spcCoords,/penalty_only)
       penalize_netflux=20.*obj_fcn
