@@ -75,7 +75,7 @@ pro pfss_mag_create_sj,magout,magtype,nlat0,gridtype,file=file, $
 ;                       phis = array of longitudes in radians
 ;                       thetas = array of colatitudes in radians
 ;                     To get Mx/cm^2 at each point, multiply by
-;                       nl/home/sjonesme/PFSS/results/optimization_out_20180412.savat*nlon/(4*!dpi*rsun^2) where rsun=6.959d10 (cm)
+;                       nlat*nlon/(4*!dpi*rsun^2) where rsun=6.959d10 (cm)
 ;         -magtype=1: Wilcox text files are available at
 ;                     http://wso.stanford.edu/synopticl.html, with the
 ;                     input data in units of microTesla.
